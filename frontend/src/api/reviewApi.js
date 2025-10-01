@@ -37,23 +37,28 @@ export const addReview = async (movieTitle, reviewText, rating) => {
         const response = await reviewApi.post('/', { movieTitle, reviewText, rating });
         return response.data;
     } catch (error) {
+        // Specifically catch 409 for existing review
+        if (error.response && error.response.status === 409) {
+            throw error.response.data.message; // Use the specific message from backend
+        }
         throw error.response?.data?.message || 'Failed to add review.';
     }
 };
 
 /**
- * Fetches all movie reviews, with optional filtering and sorting.
+ * Fetches all movie reviews, with optional filtering, sorting, and searching.
  * @param {object} [options] - Options for filtering and sorting.
  * @param {string} [options.rating] - Filter by specific rating (e.g., '5', 'all').
  * @param {string} [options.sortBy] - Sort order (e.g., 'newest', 'highest_rating', 'lowest_rating').
+ * @param {string} [options.searchQuery] - Search by movie title.
  * @returns {Promise<Array<object>>} An array of reviews.
  * @throws {string} Error message.
  */
 export const getReviews = async (options = {}) => {
-    const { rating, sortBy } = options;
+    const { rating, sortBy, searchQuery } = options;
     try {
         const response = await reviewApi.get('/', {
-            params: { rating, sortBy }
+            params: { rating, sortBy, searchQuery } // <-- Pass searchQuery here
         });
         return response.data;
     } catch (error) {

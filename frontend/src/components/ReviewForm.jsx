@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 const ReviewForm = ({ onReviewAdded }) => {
     const [movieTitle, setMovieTitle] = useState('');
     const [reviewText, setReviewText] = useState('');
-    const [rating, setRating] = useState('5'); // Default to 5 stars
+    const [rating, setRating] = useState('5');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
@@ -27,15 +27,6 @@ const ReviewForm = ({ onReviewAdded }) => {
             return;
         }
 
-        // Count only alphabetic characters
-        const letterMatch = reviewText.match(/[a-zA-Z]/g);
-        const letterCount = letterMatch ? letterMatch.length : 0;
-
-        if (letterCount < 10) {
-            setError('Review must contain at least 10 alphabetic characters.');
-            return;
-        }
-
         setIsLoading(true);
         try {
             await addReview(movieTitle, reviewText, parseInt(rating));
@@ -44,16 +35,15 @@ const ReviewForm = ({ onReviewAdded }) => {
             setReviewText('');
             setRating('5');
             if (onReviewAdded) {
-                onReviewAdded();
+                onReviewAdded(); // Re-fetch reviews for the main list
             }
         } catch (err) {
             console.error("Error adding review:", err);
-            setError(err?.message || 'Failed to submit review.');
+            setError(err); // Display error message from the API, including duplicate message
         } finally {
             setIsLoading(false);
         }
     };
-
 
     return (
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">

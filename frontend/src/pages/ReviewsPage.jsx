@@ -1,11 +1,11 @@
 // frontend/src/pages/ReviewsPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getReviews, updateReview, deleteReview } from '../api/reviewApi'; // Import update/delete
+import { getReviews, updateReview, deleteReview } from '../api/reviewApi';
 import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
-import FilterSort from '../components/FilterSort';
-import ReviewEditModal from '../components/ReviewEditModal'; // Import the new modal
+import FilterSortSearch from '../components/FilterSortSearch'; // Renamed import
+import ReviewEditModal from '../components/ReviewEditModal';
 
 const ReviewsPage = () => {
     const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
@@ -14,27 +14,31 @@ const ReviewsPage = () => {
     const [reviewsError, setReviewsError] = useState('');
     const [filterRating, setFilterRating] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
+    const [searchQuery, setSearchQuery] = useState(''); // New state for search query
 
-    // State for review editing
-    const [editingReview, setEditingReview] = useState(null); // Stores the review being edited
+    const [editingReview, setEditingReview] = useState(null);
 
     const fetchAllReviews = useCallback(async () => {
         setLoadingReviews(true);
         setReviewsError('');
         try {
-            const fetchedReviews = await getReviews({ rating: filterRating, sortBy });
+            const fetchedReviews = await getReviews({
+                rating: filterRating,
+                sortBy,
+                searchQuery // <-- Pass searchQuery here
+            });
             setReviews(fetchedReviews);
         } catch (err) {
             console.error("Failed to fetch reviews:", err);
             const errorMessage = err.toString().includes('401') ? "Your session has expired. Please log in again." : err;
             setReviewsError(errorMessage);
             if (err.toString().includes('401')) {
-                logout(); // Force logout on auth error
+                logout();
             }
         } finally {
             setLoadingReviews(false);
         }
-    }, [filterRating, sortBy, logout]); // Add logout to dependencies
+    }, [filterRating, sortBy, searchQuery, logout]); // Add searchQuery to dependencies
 
     useEffect(() => {
         if (!authLoading && isAuthenticated) {
@@ -46,11 +50,11 @@ const ReviewsPage = () => {
     }, [authLoading, isAuthenticated, fetchAllReviews]);
 
     const handleReviewAdded = () => {
-        fetchAllReviews(); // Re-fetch reviews to include the new one
+        fetchAllReviews();
     };
 
     const handleEditClick = (review) => {
-        setEditingReview(review); // Set the review to be edited
+        setEditingReview(review);
     };
 
     const handleSaveEdit = async (reviewId, updatedData) => {
@@ -58,7 +62,7 @@ const ReviewsPage = () => {
         try {
             const updatedReview = await updateReview(reviewId, updatedData);
             setReviews(reviews.map(rev => rev.id === reviewId ? updatedReview : rev));
-            setEditingReview(null); // Close modal
+            setEditingReview(null);
         } catch (err) {
             console.error("Error updating review:", err);
             setReviewsError(err);
@@ -110,17 +114,19 @@ const ReviewsPage = () => {
 
                     <div className="md:col-span-2">
                         <h2 className="text-3xl font-bold mb-6 text-indigo-400 text-center md:text-left">Community Reviews</h2>
-                        <FilterSort
+                        <FilterSortSearch // Renamed component
                             filterRating={filterRating}
                             sortBy={sortBy}
+                            searchQuery={searchQuery} // Pass searchQuery
                             onFilterChange={setFilterRating}
                             onSortChange={setSortBy}
+                            onSearchChange={setSearchQuery} // Pass search handler
                         />
                         <ReviewList
                             reviews={reviews}
                             loading={loadingReviews}
                             error={reviewsError}
-                            currentUserId={user?.id} // Pass current user ID for conditional buttons
+                            currentUserId={user?.id}
                             onEdit={handleEditClick}
                             onDelete={handleDeleteClick}
                         />

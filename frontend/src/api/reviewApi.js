@@ -37,7 +37,6 @@ export const addReview = async (movieTitle, reviewText, rating) => {
         const response = await reviewApi.post('/', { movieTitle, reviewText, rating });
         return response.data;
     } catch (error) {
-        // Extract a more specific error message from the backend response
         throw error.response?.data?.message || 'Failed to add review.';
     }
 };
@@ -54,11 +53,55 @@ export const getReviews = async (options = {}) => {
     const { rating, sortBy } = options;
     try {
         const response = await reviewApi.get('/', {
-            params: { rating, sortBy } // These become query parameters like ?rating=5&sortBy=newest
+            params: { rating, sortBy }
         });
         return response.data;
     } catch (error) {
-        // Extract a more specific error message from the backend response
         throw error.response?.data?.message || 'Failed to fetch reviews.';
+    }
+};
+
+/**
+ * Fetches reviews made by the currently logged-in user.
+ * @returns {Promise<Array<object>>} An array of reviews by the current user.
+ * @throws {string} Error message.
+ */
+export const getMyReviews = async () => {
+    try {
+        const response = await reviewApi.get('/my-reviews');
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Failed to fetch your reviews.';
+    }
+};
+
+/**
+ * Updates an existing review.
+ * @param {string} reviewId - The ID of the review to update.
+ * @param {object} updatedData - Object containing movieTitle, reviewText, rating.
+ * @returns {Promise<object>} The updated review.
+ * @throws {string} Error message.
+ */
+export const updateReview = async (reviewId, updatedData) => {
+    try {
+        const response = await reviewApi.put(`/${reviewId}`, updatedData);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Failed to update review.';
+    }
+};
+
+/**
+ * Deletes a review.
+ * @param {string} reviewId - The ID of the review to delete.
+ * @returns {Promise<object>} A success message.
+ * @throws {string} Error message.
+ */
+export const deleteReview = async (reviewId) => {
+    try {
+        const response = await reviewApi.delete(`/${reviewId}`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || 'Failed to delete review.';
     }
 };

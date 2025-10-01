@@ -16,7 +16,8 @@ const Header = () => {
                     {isAuthenticated ? (
                         <div className="flex items-center space-x-4">
                             <span className="text-gray-300 hidden md:inline">Welcome, {user?.username}!</span>
-                            <Link to="/reviews" className="text-white hover:text-indigo-400 transition-colors">Reviews</Link>
+                            <Link to="/reviews" className="text-white hover:text-indigo-400 transition-colors">All Reviews</Link>
+                            <Link to="/my-reviews" className="text-white hover:text-indigo-400 transition-colors">My Reviews</Link> {/* New Link */}
                             <button
                                 onClick={logout}
                                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-white transition-colors duration-200"

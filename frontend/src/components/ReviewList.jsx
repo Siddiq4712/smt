@@ -1,7 +1,6 @@
 // frontend/src/components/ReviewList.jsx
 import React from 'react';
 
-// Helper component for displaying stars
 const StarRating = ({ rating }) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -20,7 +19,7 @@ const StarRating = ({ rating }) => {
     return <div className="flex">{stars}</div>;
 };
 
-const ReviewList = ({ reviews, loading, error }) => {
+const ReviewList = ({ reviews, loading, error, currentUserId, onEdit, onDelete }) => {
     if (loading) {
         return <p className="text-center text-gray-400">Loading reviews...</p>;
     }
@@ -29,7 +28,7 @@ const ReviewList = ({ reviews, loading, error }) => {
         return <p className="text-center text-red-400">Error fetching reviews: {error}</p>;
     }
 
-    if (reviews.length === 0) {
+    if (!reviews || reviews.length === 0) {
         return <p className="text-center text-gray-400">No reviews found. Be the first to add one!</p>;
     }
 
@@ -37,15 +36,35 @@ const ReviewList = ({ reviews, loading, error }) => {
         <div className="space-y-4">
             {reviews.map((review) => (
                 <div key={review.id} className="bg-gray-700 p-4 rounded-lg shadow-md border border-gray-600">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-start justify-between mb-2">
                         <h3 className="text-xl font-semibold text-white">{review.movieTitle}</h3>
                         <StarRating rating={review.rating} />
                     </div>
                     <p className="text-gray-300 text-sm mb-3">
                         Reviewed by <span className="font-medium text-indigo-300">{review.User?.username || 'Anonymous'}</span> on{' '}
-                        {new Date(review.createdAt).toLocaleDateString()}
+                        {new Date(review.createdAt).toLocaleDateString()}{' '}
+                        {/* Optionally add time */}
+                        <span className="text-gray-400 text-xs">({new Date(review.createdAt).toLocaleTimeString()})</span>
                     </p>
-                    <p className="text-gray-200 leading-relaxed">{review.reviewText}</p>
+                    <p className="text-gray-200 leading-relaxed mb-4">{review.reviewText}</p>
+
+                    {/* Edit/Delete buttons (only for owner) */}
+                    {currentUserId && review.User?.id === currentUserId && (
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                onClick={() => onEdit(review)}
+                                className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-md transition-colors"
+                            >
+                                Edit
+                            </button>
+                            <button
+                                onClick={() => onDelete(review.id)}
+                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-md transition-colors"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    )}
                 </div>
             ))}
         </div>

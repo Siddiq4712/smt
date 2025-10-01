@@ -27,6 +27,15 @@ const ReviewForm = ({ onReviewAdded }) => {
             return;
         }
 
+        // Count only alphabetic characters
+        const letterMatch = reviewText.match(/[a-zA-Z]/g);
+        const letterCount = letterMatch ? letterMatch.length : 0;
+
+        if (letterCount < 10) {
+            setError('Review must contain at least 10 alphabetic characters.');
+            return;
+        }
+
         setIsLoading(true);
         try {
             await addReview(movieTitle, reviewText, parseInt(rating));
@@ -34,17 +43,17 @@ const ReviewForm = ({ onReviewAdded }) => {
             setMovieTitle('');
             setReviewText('');
             setRating('5');
-            // Call the callback to notify parent component (ReviewsPage) to re-fetch reviews
             if (onReviewAdded) {
                 onReviewAdded();
             }
         } catch (err) {
             console.error("Error adding review:", err);
-            setError(err); // Display error message from the API
+            setError(err?.message || 'Failed to submit review.');
         } finally {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">

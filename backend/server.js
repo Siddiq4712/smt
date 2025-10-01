@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { connectDB, sequelize } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-//import reviewRoutes from "./routes/reviewRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -20,16 +20,16 @@ connectDB();
 
 // Routes
 app.use("/api/auth", authRoutes);
-//app.use("/api/reviews", reviewRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // Default route
 app.get("/", (req, res) => {
   res.send("Movie Review App API is running...");
 });
 
-// Sync models with DB (create tables if not exist)
-sequelize.sync({ alter: true }).then(() => {
-  console.log('✅ All models synced with MySQL database');
+// Sync models with DB (create tables if not exist, no altering)
+sequelize.sync().then(() => {
+  console.log("✅ All models are synced (tables created if not exist)");
 });
 
 // Start server

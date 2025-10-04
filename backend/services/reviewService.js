@@ -1,7 +1,8 @@
 // backend/services/reviewService.js
 import Review from "../models/Review.js";
 import User from "../models/User.js";
-import { Op } from 'sequelize'; // Import Op for LIKE operator
+import { Op } from 'sequelize';
+import { getOmdbMovie } from "../utils/omdbApi.js";
 
 // Helper function to find if a user has already reviewed a specific movie
 export const findExistingReviewByUserAndMovie = async (userId, movieTitle) => {
@@ -9,28 +10,35 @@ export const findExistingReviewByUserAndMovie = async (userId, movieTitle) => {
     where: {
       userId,
       movieTitle: {
-        [Op.like]: movieTitle // <--- CHANGED: Use Op.like for MySQL
+        [Op.like]: movieTitle // Case-insensitive match for movie title
       }
     },
     include: { model: User, attributes: ["id", "username", "email"] }
   });
 };
 
-
-// Add a new review
+// Add a new review (No change needed)
 export const createReview = async (userId, movieTitle, reviewText, rating) => {
   if (!movieTitle || !reviewText || !rating) {
     throw new Error("All fields are required");
   }
 
-  // Check if the user has already reviewed this movie
-  const existingReview = await findExistingReviewByUserAndMovie(userId, movieTitle);
+  // --- OMDB Validation for initial creation ---
+  const omdbMovie = await getOmdbMovie(movieTitle);
+  if (!omdbMovie) {
+    throw new Error(`"${movieTitle}" is not a valid movie title found on OMDB. Please select a valid movie.`);
+  }
+  const validatedMovieTitle = omdbMovie.Title; // Use the exact title from OMDB for consistency
+  // --- End OMDB Validation ---
+
+  // Check if the user has already reviewed this movie (using the validated title)
+  const existingReview = await findExistingReviewByUserAndMovie(userId, validatedMovieTitle);
   if (existingReview) {
-    throw new Error(`You have already reviewed "${movieTitle}". Please edit your existing review.`);
+    throw new Error(`You have already reviewed "${validatedMovieTitle}". Please edit your existing review.`);
   }
 
   const review = await Review.create({
-    movieTitle,
+    movieTitle: validatedMovieTitle, // Store the validated OMDB title
     reviewText,
     rating,
     userId,
@@ -43,7 +51,7 @@ export const createReview = async (userId, movieTitle, reviewText, rating) => {
   return createdReviewWithUser;
 };
 
-// Get all reviews with optional filtering, sorting, and searching
+// Get all reviews with optional filtering, sorting, and searching (No change needed)
 export const fetchReviews = async (filterOptions = {}) => {
   const { rating, sortBy, searchQuery } = filterOptions;
 
@@ -55,14 +63,13 @@ export const fetchReviews = async (filterOptions = {}) => {
     }
   }
 
-  // Add search query to the where clause
   if (searchQuery) {
     where.movieTitle = {
-      [Op.like]: `%${searchQuery}%` // <--- CHANGED: Use Op.like for MySQL
+      [Op.like]: `%${searchQuery}%`
     };
   }
 
-  let order = [['createdAt', 'DESC']]; // Default sort by newest
+  let order = [['createdAt', 'DESC']];
   if (sortBy === 'highest_rating') {
     order = [['rating', 'DESC'], ['createdAt', 'DESC']];
   } else if (sortBy === 'lowest_rating') {
@@ -77,7 +84,7 @@ export const fetchReviews = async (filterOptions = {}) => {
   return reviews;
 };
 
-// Fetch reviews for a specific user (no search/filter for history, simple newest first)
+// Fetch reviews for a specific user (No change needed)
 export const fetchUserReviews = async (userId) => {
   const reviews = await Review.findAll({
     where: { userId },
@@ -87,8 +94,8 @@ export const fetchUserReviews = async (userId) => {
   return reviews;
 };
 
-// Update an existing review
-export const updateReview = async (reviewId, userId, movieTitle, reviewText, rating) => {
+// Update an existing review - MODIFIED: movieTitle is no longer a parameter
+export const updateReview = async (reviewId, userId, reviewText, rating) => { // <--- movieTitle removed from params
   const review = await Review.findByPk(reviewId);
 
   if (!review) {
@@ -99,13 +106,13 @@ export const updateReview = async (reviewId, userId, movieTitle, reviewText, rat
     throw new Error("Not authorized to update this review");
   }
 
-  if (!movieTitle || !reviewText || !rating) {
-    throw new Error("All fields are required");
+  if (!reviewText || !rating) { // <--- Only validate reviewText and rating
+    throw new Error("Review text and rating are required"); // Updated error message
   }
 
-  review.movieTitle = movieTitle;
-  review.reviewText = reviewText;
-  review.rating = rating;
+  // movieTitle is NOT updated here, it remains as per the original review.
+  review.reviewText = reviewText; // Update only reviewText
+  review.rating = rating;         // Update only rating
   await review.save();
 
   const updatedReviewWithUser = await Review.findByPk(review.id, {
@@ -115,7 +122,7 @@ export const updateReview = async (reviewId, userId, movieTitle, reviewText, rat
   return updatedReviewWithUser;
 };
 
-// Delete a review
+// Delete a review (No change needed)
 export const deleteReview = async (reviewId, userId) => {
   const review = await Review.findByPk(reviewId);
 

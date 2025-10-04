@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getReviews, updateReview, deleteReview } from '../api/reviewApi';
 import ReviewForm from '../components/ReviewForm';
 import ReviewList from '../components/ReviewList';
-import FilterSortSearch from '../components/FilterSortSearch'; // Renamed import
+import FilterSortSearch from '../components/FilterSortSearch';
 import ReviewEditModal from '../components/ReviewEditModal';
 
 const ReviewsPage = () => {
@@ -14,7 +14,7 @@ const ReviewsPage = () => {
     const [reviewsError, setReviewsError] = useState('');
     const [filterRating, setFilterRating] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
-    const [searchQuery, setSearchQuery] = useState(''); // New state for search query
+    const [searchQuery, setSearchQuery] = useState('');
 
     const [editingReview, setEditingReview] = useState(null);
 
@@ -25,7 +25,7 @@ const ReviewsPage = () => {
             const fetchedReviews = await getReviews({
                 rating: filterRating,
                 sortBy,
-                searchQuery // <-- Pass searchQuery here
+                searchQuery
             });
             setReviews(fetchedReviews);
         } catch (err) {
@@ -38,7 +38,7 @@ const ReviewsPage = () => {
         } finally {
             setLoadingReviews(false);
         }
-    }, [filterRating, sortBy, searchQuery, logout]); // Add searchQuery to dependencies
+    }, [filterRating, sortBy, searchQuery, logout]);
 
     useEffect(() => {
         if (!authLoading && isAuthenticated) {
@@ -58,16 +58,19 @@ const ReviewsPage = () => {
     };
 
     const handleSaveEdit = async (reviewId, updatedData) => {
-        setReviewsError('');
+        // No local state for error here, modal handles it
         try {
             const updatedReview = await updateReview(reviewId, updatedData);
             setReviews(reviews.map(rev => rev.id === reviewId ? updatedReview : rev));
-            setEditingReview(null);
+            setEditingReview(null); // Close modal on success
+            return true; // Indicate success
         } catch (err) {
             console.error("Error updating review:", err);
-            setReviewsError(err);
+            // Propagate the error back to the modal for display
+            throw err;
         }
     };
+
 
     const handleDeleteClick = async (reviewId) => {
         if (!window.confirm("Are you sure you want to delete this review?")) {
@@ -114,13 +117,13 @@ const ReviewsPage = () => {
 
                     <div className="md:col-span-2">
                         <h2 className="text-3xl font-bold mb-6 text-indigo-400 text-center md:text-left">Community Reviews</h2>
-                        <FilterSortSearch // Renamed component
+                        <FilterSortSearch
                             filterRating={filterRating}
                             sortBy={sortBy}
-                            searchQuery={searchQuery} // Pass searchQuery
+                            searchQuery={searchQuery}
                             onFilterChange={setFilterRating}
                             onSortChange={setSortBy}
-                            onSearchChange={setSearchQuery} // Pass search handler
+                            onSearchChange={setSearchQuery}
                         />
                         <ReviewList
                             reviews={reviews}

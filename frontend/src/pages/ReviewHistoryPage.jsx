@@ -11,7 +11,7 @@ const ReviewHistoryPage = () => {
     const [loadingMyReviews, setLoadingMyReviews] = useState(true);
     const [myReviewsError, setMyReviewsError] = useState('');
 
-    const [editingReview, setEditingReview] = useState(null); // State for review editing
+    const [editingReview, setEditingReview] = useState(null);
 
     const fetchMyReviewHistory = useCallback(async () => {
         setLoadingMyReviews(true);
@@ -24,7 +24,7 @@ const ReviewHistoryPage = () => {
             const errorMessage = err.toString().includes('401') ? "Your session has expired. Please log in again." : err;
             setMyReviewsError(errorMessage);
             if (err.toString().includes('401')) {
-                logout(); // Force logout on auth error
+                logout();
             }
         } finally {
             setLoadingMyReviews(false);
@@ -41,18 +41,18 @@ const ReviewHistoryPage = () => {
     }, [authLoading, isAuthenticated, fetchMyReviewHistory]);
 
     const handleEditClick = (review) => {
-        setEditingReview(review); // Set the review to be edited
+        setEditingReview(review);
     };
 
     const handleSaveEdit = async (reviewId, updatedData) => {
-        setMyReviewsError('');
         try {
             const updatedReview = await updateReview(reviewId, updatedData);
             setMyReviews(myReviews.map(rev => rev.id === reviewId ? updatedReview : rev));
-            setEditingReview(null); // Close modal
+            setEditingReview(null);
+            return true;
         } catch (err) {
             console.error("Error updating review:", err);
-            setMyReviewsError(err);
+            throw err;
         }
     };
 
@@ -99,21 +99,21 @@ const ReviewHistoryPage = () => {
                         reviews={myReviews}
                         loading={loadingMyReviews}
                         error={myReviewsError}
-                        currentUserId={user?.id} // Pass current user ID
+                        currentUserId={user?.id}
                         onEdit={handleEditClick}
                         onDelete={handleDeleteClick}
                     />
                 </div>
+                {editingReview && (
+                    <ReviewEditModal
+                        review={editingReview}
+                        onSave={handleSaveEdit}
+                        onClose={() => setEditingReview(null)}
+                    />
+                )}
             </div>
-            {editingReview && (
-                <ReviewEditModal
-                    review={editingReview}
-                    onSave={handleSaveEdit}
-                    onClose={() => setEditingReview(null)}
-                />
-            )}
         </div>
-    );
-};
+        );
+    };
 
-export default ReviewHistoryPage;
+    export default ReviewHistoryPage;

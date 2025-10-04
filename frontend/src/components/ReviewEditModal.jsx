@@ -2,20 +2,38 @@
 import React, { useState, useEffect } from 'react';
 
 const ReviewEditModal = ({ review, onSave, onClose }) => {
-    const [movieTitle, setMovieTitle] = useState(review.movieTitle);
+    // movieTitle is displayed but not editable
+    const [movieTitle, setMovieTitle] = useState(review.movieTitle); // Kept for display
     const [reviewText, setReviewText] = useState(review.reviewText);
-    const [rating, setRating] = useState(String(review.rating)); // Convert to string for select
+    const [rating, setRating] = useState(String(review.rating));
+    const [editError, setEditError] = useState(''); // New state for errors during edit
 
     useEffect(() => {
-        // Update form fields if the 'review' prop changes (e.g., editing a different review)
+        // Update state if the `review` prop changes (e.g., editing a different review)
         setMovieTitle(review.movieTitle);
         setReviewText(review.reviewText);
         setRating(String(review.rating));
+        setEditError(''); // Clear error on review change
     }, [review]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSave(review.id, { movieTitle, reviewText, rating: parseInt(rating) });
+        setEditError(''); // Clear previous errors
+
+        if (!reviewText.trim() || !rating) { // <--- Only validate reviewText and rating
+            setEditError('Review text and rating are required.'); // Updated error message
+            return;
+        }
+
+        try {
+            // Pass ONLY reviewText and rating to onSave
+            await onSave(review.id, { reviewText, rating: parseInt(rating) }); // <--- Only these two fields
+            // The parent component's onSave handles success and closing the modal
+        } catch (err) {
+            console.error("Error during review save in modal:", err);
+            // Catch errors from onSave (which comes from updateReview API call)
+            setEditError(err); // The error is already a string message from reviewApi
+        }
     };
 
     return (
@@ -38,9 +56,9 @@ const ReviewEditModal = ({ review, onSave, onClose }) => {
                             type="text"
                             id="editMovieTitle"
                             value={movieTitle}
-                            onChange={(e) => setMovieTitle(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            required
+                            className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-gray-400 sm:text-sm cursor-not-allowed" // <--- STYLING FOR DISABLED
+                            disabled // <--- DISABLE THE INPUT
+                            readOnly // <--- MARK AS READ-ONLY
                         />
                     </div>
                     <div>
@@ -74,6 +92,8 @@ const ReviewEditModal = ({ review, onSave, onClose }) => {
                             required
                         ></textarea>
                     </div>
+
+                    {editError && <p className="text-red-400 text-sm mt-2">{editError}</p>}
 
                     <div className="flex justify-end space-x-3 mt-6">
                         <button

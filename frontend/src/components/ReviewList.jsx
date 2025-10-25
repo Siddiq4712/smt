@@ -19,6 +19,12 @@ const StarRating = ({ rating }) => {
     return <div className="flex">{stars}</div>;
 };
 
+// Helper to truncate hashes for display
+const truncateHash = (hash) => {
+    if (!hash || hash === '0') return hash;
+    return `${hash.substring(0, 8)}...${hash.substring(hash.length - 8)}`;
+};
+
 const ReviewList = ({ reviews, loading, error, currentUserId, onEdit, onDelete }) => {
     if (loading) {
         return <p className="text-center text-gray-400">Loading reviews...</p>;
@@ -43,14 +49,25 @@ const ReviewList = ({ reviews, loading, error, currentUserId, onEdit, onDelete }
                     <p className="text-gray-300 text-sm mb-3">
                         Reviewed by <span className="font-medium text-indigo-300">{review.User?.username || 'Anonymous'}</span> on{' '}
                         {new Date(review.createdAt).toLocaleDateString()}{' '}
-                        {/* Optionally add time */}
                         <span className="text-gray-400 text-xs">({new Date(review.createdAt).toLocaleTimeString()})</span>
                     </p>
                     <p className="text-gray-200 leading-relaxed mb-4">{review.reviewText}</p>
 
+                    {/* NEW: Display blockchain-inspired hashes */}
+                    <div className="text-xs text-gray-400 mt-2 space-y-1">
+                        <p title={`Current Review Block Hash: ${review.originalBlockHash}`}>
+                            <span className="font-semibold text-indigo-300">Block Hash:</span> {truncateHash(review.originalBlockHash)}
+                            {review.originalBlockHash === 'pending' && <span className="text-red-400 ml-2">(Error generating hash)</span>}
+                        </p>
+                        <p title={`Previous Block Hash: ${review.previousBlockHash}`}>
+                            <span className="font-semibold text-indigo-300">Previous Hash:</span> {truncateHash(review.previousBlockHash)}
+                            {review.previousBlockHash === '0' && <span className="text-green-400 ml-2">(Genesis Block)</span>}
+                        </p>
+                    </div>
+
                     {/* Edit/Delete buttons (only for owner) */}
                     {currentUserId && review.User?.id === currentUserId && (
-                        <div className="flex justify-end space-x-2">
+                        <div className="flex justify-end space-x-2 mt-4">
                             <button
                                 onClick={() => onEdit(review)}
                                 className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-md transition-colors"

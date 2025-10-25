@@ -28,10 +28,14 @@ export const addReview = async (movieTitle, reviewText, rating) => {
         const response = await reviewApi.post('/', { movieTitle, reviewText, rating });
         return response.data;
     } catch (error) {
+        // Specifically catch 400 for bad request/validation (OMDB or duplicate)
         if (error.response && error.response.status === 400) {
+            // Throw ONLY the message string to prevent console stack trace
             throw error.response.data.message;
         }
-        throw error.response?.data?.message || 'Failed to add review.';
+        // For other unexpected errors, you might still throw the full error object
+        // or a generic message if error.response.data.message is not available
+        throw error.response?.data?.message || 'Failed to add review due to an unexpected error.';
     }
 };
 
@@ -56,20 +60,19 @@ export const getMyReviews = async () => {
     }
 };
 
-// Update an existing review - MODIFIED: only sends reviewText and rating
-export const updateReview = async (reviewId, updatedData) => { // <--- updatedData now only expected to contain reviewText and rating
+export const updateReview = async (reviewId, updatedData) => {
     try {
-        // Explicitly extract only the editable fields
         const { reviewText, rating } = updatedData;
-        // Send only these fields to the backend
-        const response = await reviewApi.put(`/${reviewId}`, { reviewText, rating }); // <--- Only send these two fields
+        const response = await reviewApi.put(`/${reviewId}`, { reviewText, rating });
         return response.data;
     } catch (error)
     {
+        // Specifically catch 400 for bad request/validation (OMDB or duplicate)
         if (error.response && error.response.status === 400) {
+            // Throw ONLY the message string to prevent console stack trace
             throw error.response.data.message;
         }
-        throw error.response?.data?.message || 'Failed to update review.';
+        throw error.response?.data?.message || 'Failed to update review due to an unexpected error.';
     }
 };
 

@@ -5,7 +5,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import ReviewsPage from './pages/ReviewsPage';
-import ReviewHistoryPage from './pages/ReviewHistoryPage'; // Import new page
+import ReviewHistoryPage from './pages/ReviewHistoryPage';
+import RecommendationsPage from './pages/RecommendationsPage'; // <--- NEW IMPORT
 import Header from './components/Header';
 
 const ProtectedRoute = ({ children }) => {
@@ -42,12 +43,20 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-                    {/* New protected route for user's own review history */}
                     <Route
                         path="/my-reviews"
                         element={
                             <ProtectedRoute>
                                 <ReviewHistoryPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    {/* <--- NEW PROTECTED ROUTE FOR RECOMMENDATIONS ---> */}
+                    <Route
+                        path="/recommendations"
+                        element={
+                            <ProtectedRoute>
+                                <RecommendationsPage />
                             </ProtectedRoute>
                         }
                     />
